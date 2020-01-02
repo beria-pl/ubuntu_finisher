@@ -1,8 +1,8 @@
-# Prepares LinuxMint19 desktop.
+# Prepares Ubuntu 19.10 desktop.
 # start from preparing ssh:
 # sudo apt install openssh-server ntp;systemctl enable ssh && systemctl start ssh
 #
-- name: prepare_mint_desktop
+- name: prepare_ubuntu_desktop
   hosts: all
   vars:
     install_optional: true                    # should optional packages be installed?

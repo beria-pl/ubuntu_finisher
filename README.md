@@ -1,8 +1,8 @@
-# Ansible playbook for your super-admin/devops Linux Mint 19.x based workstation
+# Ansible playbook for your super-admin/devops Ubuntu Linux 19.10 based workstation
 
 ## Prerequisites
 
-* installed Linux Mint 19, 19.1, 19.2 64-bit, standard options with extra codecs (available as selection during install)
+* installed Ubuntu Linux 19.10 64-bit, standard options with extra codecs (available as selection during install)
 * access to Internet
 * openssh-server installed and running
 * Ansible in version 2.8 or higher
