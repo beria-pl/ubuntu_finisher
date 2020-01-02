@@ -1,0 +1,443 @@
+#repositories we'd like to add - mandatory
+repositories:
+ - repo: deb http://deb.anydesk.com/ all main
+   filename: anydesk
+ - repo: deb http://apt.insync.io/ubuntu eoan non-free contrib
+   filename: insync
+ - repo: ppa:ansible/ansible
+   filename: ansible
+ #- repo: ppa:synapse-core/testing
+ #  filename: synapse-core
+ #  codename: bionic
+ - repo: ppa:ubuntu-mozilla-security/ppa
+   filename: ubuntu-mozilla-security
+ - repo: ppa:remmina-ppa-team/remmina-next
+   filename: remmina-next
+ - repo: ppa:webupd8team/y-ppa-manager
+   filename: y-ppa-manager
+ - repo: ppa:gezakovacs/ppa
+   filename: gezakovacs
+ - repo: deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ eoan main
+   filename: azure-cli
+ - repo: deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main
+   filename: vscode
+ - repo: deb [arch=amd64] https://packages.microsoft.com/ubuntu/19.10/prod eoan main
+   filename: microsoft-prod-deb
+ - repo: deb http://download.opensuse.org/repositories/home:/stevenpusser/xUbuntu_19.10/ /
+   filename: palemoon
+ - repo: deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main
+   filename: google-chrome
+ - repo: deb [arch=amd64] http://download.virtualbox.org/virtualbox/debian disco contrib
+   filename: virtualbox
+ - repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu disco stable
+   filename: docker-stable
+ - repo: deb http://apt.kubernetes.io/ kubernetes-xenial main
+   filename: kubernetes-stable
+ - repo: deb http://packages.cloud.google.com/apt cloud-sdk-disco main
+   filename: google-cloud-sdk
+ - repo: deb http://packages.cloud.google.com/apt gcsfuse-bionic main
+   filename: gcsfuse
+ - repo: deb https://packagecloud.io/asbru-cm/asbru-cm/ubuntu/ eoan main
+   filename: asbru-cm
+ - repo: ppa:mozillateam/ppa
+   filename: mozillateam
+ - repo: deb http://download.opensuse.org/repositories/home:/Alexx2000/xUbuntu_19.10/ /
+   filename: alexx2000
+repositories_optional:
+ - repo: ppa:nilarimogard/webupd8
+   filename: webupdt
+   codename: eoan
+ - repo: ppa:noobslab/themes
+   filename: noobslab-themes
+   codename: bionic
+ - repo: ppa:noobslab/icons
+   filename: noobslab-icons
+   codename: eoan
+ - repo: ppa:danielrichter2007/grub-customizer
+   codename: disco
+   filename: grub-customizer
+ - repo: ppa:dawidd0811/neofetch
+   codename: eoan
+   filename: neofetch
+ #- repo: ppa:ubuntuhandbook1/shutter
+ #  codename: bionic
+ #  filename: shutter
+ - repo: ppa:ehoover/compholio
+   codename: xenial
+   filename: compholio
+ - repo: deb https://download.sublimetext.com/ apt/stable/
+   codename: stable
+   filename: sublime-text
+ - repo: deb http://repo.sinew.in/ stable main
+   codename: stable
+   filename: enpass
+ - repo: deb http://repository.spotify.com stable non-free
+   codename: stable
+   filename: spotify
+ - repo: deb [arch=amd64] https://repo.skype.com/deb stable main
+   codename: stable
+   filename: skype-stable
+# - repo: deb [arch=amd64] http://repository.veeam.com/backup/linux/agent/dpkg/debian/public stable veeam
+#   codename: stable
+#   filename: veeam
+ - repo: ppa:unit193/encryption
+   filename: veracrypt
+   codename: eoan
+ - repo: deb http://apt.puppetlabs.com bionic puppet5
+   filename: puppet5
+   codename: bionic
+ - repo: deb [arch=amd64] http://repo.fortinet.com/repo/ubuntu/ /bionic multiverse
+   filename: forticlient
+   codename: bionic
+ - repo: deb https://aquasecurity.github.io/trivy-repo/deb bionic main
+   filename: trivy
+   codename: bionic
+ - repo: deb [arch=amd64] https://brave-browser-apt-release.s3.brave.com/ bionic main
+   filename: brave-browser-release-bionic.list
+   codename: bionic
+repositories_remove:
+ - repo: ppa:xuzhen666/dockbarx
+   codename: bionic
+   filename: dockbarx
+ - repo: ppa:alexx2000/doublecmd
+   filename: alexx2000-doublecmd
+ - repo: deb https://knqyf263.github.io/trivy-repo/deb bionic main
+   filename: trivy
+keys:
+ - https://download.opensuse.org/repositories/home:stevenpusser/xUbuntu_19.10/Release.key
+ - https://download.opensuse.org/repositories/home:Alexx2000/xUbuntu_19.10/Release.key
+ - https://packages.microsoft.com/keys/microsoft.asc
+ - https://dl-ssl.google.com/linux/linux_signing_key.pub
+ - https://packages.cloud.google.com/apt/doc/apt-key.gpg
+ - https://dl.sinew.in/keys/enpass-linux.key
+ - https://www.virtualbox.org/download/oracle_vbox_2016.asc
+ - https://download.sublimetext.com/sublimehq-pub.gpg
+ - https://download.docker.com/linux/ubuntu/gpg
+ - http://repository.veeam.com/keys/veeam.gpg
+ - https://repo.skype.com/data/SKYPE-GPG-KEY
+ - https://packagecloud.io/github/git-lfs/gpgkey
+ - https://apt.puppetlabs.com/pubkey.gpg
+ - https://packagecloud.io/asbru-cm/asbru-cm/gpgkey
+ - http://repo.fortinet.com/repo/ubuntu/DEB-GPG-KEY
+ - https://aquasecurity.github.io/trivy-repo/deb/public.key
+ - https://brave-browser-apt-release.s3.brave.com/brave-core.asc
+ - https://keys.anydesk.com/repos/DEB-GPG-KEY
+keys_pgp:
+ - server: keyserver.ubuntu.com
+   key: 931FF8E79F0876134EDDBDCCA87FF9DF48BF1C90
+# spotify 2019
+ - server: keyserver.ubuntu.com
+   key: 4773BD5E130D1D45
+ - server: keyserver.ubuntu.com
+   key: ACCAF35C
+ - server: packages.microsoft.com
+   key: 52E16F86FEE04B979B07E28DB02C46DF417A0893
+packages_essential:
+- apt-transport-https
+- mc
+- dkms
+- gcc
+- dotnet-sdk-3.1
+- dotnet-runtime-3.1
+- build-essential
+#- mint-meta-codecs
+- libvte-dev
+packages:
+- anydesk
+- insync
+- synaptic
+- ansible
+- azure-cli
+- google-cloud-sdk
+- gcsfuse
+- awscli
+- palemoon
+- code
+#- powershell
+- google-chrome-stable
+- virtualbox
+- python-dev
+- krb5-config
+- krb5-locales
+- krb5-user
+- krb5-multidev
+- libkrb5-dev
+- python-pip
+- python-all-dev
+- python-wheel
+- python-gpg
+- python-psutil
+- python3-pip
+- python3-all-dev
+- python3-wheel
+- python3-gpg
+- python3-psutil
+- diodon
+- doublecmd-gtk
+- htop
+- iotop
+- atop
+- iftop
+- nmap
+- zenmap
+# - remmina
+# - remmina-plugin-rdp
+# - remmina-plugin-vnc
+# - remmina-plugin-secret
+- mpv
+- rabbitvcs-core
+- liblinear-tools
+- liblinear-dev
+- p7zip-rar
+- hwinfo
+- ndiff
+- extlinux
+- syslinux
+- unetbootin-translations
+- va-driver-all
+- p7zip-rar
+#- nemo-dropbox
+- chromium-codecs-ffmpeg-extra
+- wireshark
+- xca
+- viewnior
+- tlp
+- ncurses-term
+- ssh-import-id
+- screen
+- tmux
+- arj
+- terminator
+- ncdu
+- keepass2
+- smartmontools
+- libqt5multimedia5-plugins
+- openjdk-11-jre
+- gsmartcontrol
+- nmon
+- sysstat
+- stress
+- npm
+- unzip
+- docker-ce
+- kubeadm
+#- shutter
+#- synapse
+- git
+- gparted
+- filezilla
+- git-lfs
+- network-manager-fortisslvpn
+- openfortivpn
+- network-manager-vpnc
+- network-manager-openconnect
+- redshift-gtk
+- asbru-cm
+- iperf3
+- traceroute
+- nfs-client
+- rdesktop
+- gddrescue
+- testdisk
+- partclone
+- clonezilla
+- rdesktop
+- httpie
+- ngrep
+- tshark
+- hping3
+- siege
+- trivy
+- sshfs
+- whois
+- dos2unix
+- ioping
+- dstat
+- rclone
+- multitail
+- shellcheck
+- dconf-cli
+- dconf-editor
+packages_optional:
+- enpass
+- pdk
+- puppet-agent
+- kodi
+#- dockbarx
+- grub-customizer
+- unetbootin
+#- adobe-flashplugin
+#- adobe-flash-properties-gtk
+- gimp
+- vlc
+- kazam
+- sublime-text
+- javascript-common
+#- geoip-database-extra
+- thunderbird
+- neofetch
+- skypeforlinux
+#- veeam
+#- veeamsnap
+- pinta
+- woeusb
+- veracrypt
+- spotify-client
+- isomaster
+- brave-browser
+deb:
+#- https://teams.microsoft.com/downloads/desktopurl?env=production&plat=linux&arch=x64&download=true&linuxArchiveType=deb
+- https://www.dropbox.com/download?dl=packages/ubuntu/dropbox_2019.02.14_amd64.deb
+- https://github.com/angryip/ipscan/releases/download/3.6.2/ipscan_3.6.2_amd64.deb
+- https://release.axocdn.com/linux/gitkraken-amd64.deb
+- https://releases.hashicorp.com/vagrant/2.2.6/vagrant_2.2.6_x86_64.deb
+#- https://launchpad.net/ubuntu/+archive/primary/+files/libgoo-canvas-perl_0.06-2ubuntu3_amd64.deb
+- https://github.com/BoostIO/boost-releases/releases/download/v0.13.0/boostnote_0.13.0_amd64.deb
+- https://github.com/Eugeny/terminus/releases/download/v1.0.97/terminus-1.0.97-linux.deb
+- https://github.com/ramboxapp/community-edition/releases/download/0.7.2/Rambox-0.7.2-linux-amd64.deb
+- https://download.teamviewer.com/download/linux/teamviewer_amd64.deb
+- https://github.com/kubernetes/minikube/releases/download/v1.5.2/minikube_1.5.2.deb
+#- http://kdl.cc.ksosoft.com/wps-community/download/8865/wps-office_11.1.0.8865_amd64.deb
+- https://github.com/wagoodman/dive/releases/download/v0.9.1/dive_0.9.1_linux_amd64.deb
+#flatpak:
+#- name: https://flathub.org/repo/appstream/com.getpostman.Postman.flatpakref
+pip:
+- pip
+- s-tui
+- pywinrm[kerberos]
+- pywinrm[credssp]
+- pypsrp
+- yamllint
+downloads:
+- url: https://releases.hashicorp.com/packer/1.4.5/packer_1.4.5_linux_amd64.zip
+  destination: packer
+  skip_tree: false
+- url: https://get.helm.sh/helm-v2.14.3-linux-amd64.tar.gz
+  destination: helm
+  skip_tree: true
+  skip_levels: 1
+- url: https://get.helm.sh/helm-v3.0.0-linux-arm64.tar.gz
+  destination: helm3
+  skip_tree: true
+  skip_levels: 1
+- url: https://releases.hashicorp.com/terraform/0.12.15/terraform_0.12.15_linux_amd64.zip
+  destination: terraform
+  skip_tree: false
+- url: https://releases.hashicorp.com/vault/1.3.0/vault_1.3.0_linux_amd64.zip
+  destination: vault
+  skip_tree: false
+- url: https://github.com/wata727/tflint/releases/download/v0.12.1/tflint_linux_amd64.zip
+  destination: tflint
+  skip_tree: false
+files:
+- url: https://github.com/docker/compose/releases/download/1.24.1/docker-compose-Linux-x86_64
+  destination: docker-compose
+- url: https://github.com/bcicen/ctop/releases/download/v0.7.2/ctop-0.7.2-linux-amd64
+  destination: ctop
+- url: https://github.com/rancher/rke/releases/download/v0.3.2/rke_linux-amd64
+  destination: rke
+- url: https://github.com/dannagle/PacketSender/releases/download/v6.2.3/PacketSender_Linux_x64_v6.2.3.AppImage
+  destination: packetsender
+- url: https://github.com/rancher/k3s/releases/download/v0.10.2/k3s
+  destination: k3s
+mitogen:
+  config:
+    - section: defaults
+      option: strategy
+      value: mitogen_linear
+    - section: defaults
+      option: strategy_plugins
+      value: /etc/ansible/mitogen/ansible_mitogen/plugins/strategy
+  download:
+    - urls: https://networkgenomics.com/try/mitogen-0.2.9.tar.gz
+      dest_path: /etc/ansible/mitogen
+ansible:
+  cfg: /etc/ansible/ansible.cfg
+  config:
+    - section: defaults
+      option: host_key_checking
+      value: False
+    - section: defaults
+      option: retry_file_enable
+      value: False
+startup:
+- filename: redshift-gtk.desktop
+  source: ./files/apps/redshift-gtk/redshift-gtk.desktop
+#- filename: shutter.desktop
+#  source: ./files/apps/shutter/shutter.desktop
+#- filename: dropbox.desktop
+#  source: ./files/apps/dropbox/dropbox.desktop
+#- filename: synapse.desktop
+#  source: ./files/apps/synapse/synapse.desktop
+#- filename: DockX.desktop
+  source: ./files/apps/dockbarx/DockX.desktop
+- filename: remmina-applet.desktop
+  source: ./files/apps/remmina/remmina-applet.desktop
+- filename: diodon.desktop
+  source: ./files/apps/diodon/diodon.desktop
+services:
+- ssh
+- docker
+dconf:
+   # remove alt+f7 move window shortcut
+ - key: "/org/cinnamon/muffin/keybindings/begin-move"
+   state: present
+   value: "['']"
+ - key: "/org/cinnamon/desktop/keybindings/wm/begin-move"
+   state: present
+   value: "['']"
+timezone: Europe/Warsaw
+vscode:
+- alefragnani.project-manager
+- DavidAnson.vscode-markdownlint
+- DotJoshJohnson.xml
+- emmanuelbeziat.vscode-great-icons
+- florianloch.text-transform
+- gep13.chocolatey-vscode
+- hypnoes.word-count
+- jansenfuller.crayon-vscode
+- joffreykern.markdown-toc
+- jpogran.puppet-vscode
+- marcostazi.VS-code-vagrantfile
+- mauve.terraform
+- mohsen1.prettify-json
+- ms-azuretools.vscode-azureterraform
+- ms-azuretools.vscode-docker
+- ms-kubernetes-tools.vscode-kubernetes-tools
+- ms-python.python
+- ms-vscode.azure-account
+- ms-vscode.azurecli
+- ms-vscode.cpptools
+- ms-vscode.Go
+- ms-vscode.powershell
+- ms-vscode.wordcount
+- ms-vsliveshare.vsliveshare
+- p1c2u.docker-compose
+- pgourlain.erlang
+- rebornix.ruby
+- redhat.vscode-yaml
+- shardulm94.trailing-spaces
+- tht13.html-preview-vscode
+- vscoss.vscode-ansible
+- wholroyd.jinja
+- yzane.markdown-pdf
+- timonwong.shellcheck
+sysctl:
+  # enable bbr congestion for tcp
+  - name: net.core.default_qdisc
+    value: fq
+    state: present
+  - name: net.ipv4.tcp_congestion_control
+    value: bbr
+    state: present
+  # decrease swappiness when you have plenty of RAM
+  - name: vm.swappiness
+    value: 1
+    state: present
+alternatives:
+  - name: editor
+    path: /usr/bin/nano
+    variable: EDITOR
+global_env:
+  - name: EDITOR
+    value: nano

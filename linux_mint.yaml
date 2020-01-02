@@ -1,0 +1,651 @@
+# Prepares LinuxMint19 desktop.
+# start from preparing ssh:
+# sudo apt install openssh-server ntp;systemctl enable ssh && systemctl start ssh
+#
+- name: prepare_mint_desktop
+  hosts: all
+  vars:
+    install_optional: true                    # should optional packages be installed?
+    install_deb: true                         # should extra deb packages should be installed
+    install_flatpak: true
+    install_vscode_extensions: true           # should we install extra vscode extensions
+    install_mitogen: true                     # true by default
+    config_ansible: true                      # do changes in change ansible.cfg
+    config_dconf: true                        # do changes in dconf editor
+    config_sysctl: true
+    active_user: "{{ ansible_ssh_user }}"     # user for which you're setting folders. By default taken from group_vars
+    codename: eoan                            # codename of version you're setting PPAs for
+    retries_count: 4                          # how many retries
+    delay_time: 15                            # delay time in seconds between retries
+    bin_path: /usr/local/bin                  # Where to put all downloaded execs.
+    reboot_required: false                    # force reboot even if apt upgrade won't change anything
+  vars_files:
+    - variables.yml
+  become: true
+  gather_facts: no
+  pre_tasks:
+    # ansible version
+    - name: verify_ansible_meets_version_requirements
+      assert:
+        that: "ansible_version.full is version_compare('2.8', '>=')"
+        msg: >
+          "You must update Ansible to at least 2.8 to use this version of playbook"
+      tags:
+      - assert
+    # setup module - we need these facts
+    - name: run_initial_setup_instead_of_gather_facts
+      setup:
+        gather_timeout: 30
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      register: r_setup_status
+      until: r_setup_status is success
+      tags:
+      - assert
+    # free space for stuff
+    - name: assert_root_partition_is_15_GB_of_free_space
+      assert: { that: item.size_available > 16106127360 } # 15 GB free
+      loop: '{{ ansible_mounts }}'
+      ignore_errors: no
+      #register: freespace
+      when: item.mount == '/'
+      tags:
+      - assert
+  tasks:
+  # we need proper time to refresh repositories
+  - name: start_timesyncd
+    systemd:
+      name: systemd-timesyncd
+      state: started
+      enabled: true
+    changed_when: false
+    tags:
+    - base
+  - name: start_timedatectl_set_ntp
+    shell: timedatectl set-ntp on
+    tags:
+    - base
+    changed_when: false
+# Install apt pgp keys (files)
+  - name: install_apt_keys
+    apt_key:
+      url: "{{ item }}"
+      state: present
+    loop: "{{ keys }}"
+    register: keys
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    until: keys is success
+    any_errors_fatal: true
+    tags:
+    - keys
+    - base
+# Install apt gpg keys (ID)
+  - name: install_apt_keys_by_id
+    apt_key:
+      keyserver: "{{ item.server}}"
+      state: present
+      id: "{{ item.key }}"
+    loop: "{{ keys_pgp }}"
+    register: keys_pgp
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    until: keys_pgp is success
+    any_errors_fatal: true
+    tags:
+    - keys
+    - base
+# remove obsolete repositories
+  - name: remove_obsolete_repositories_from_variables_file
+    apt_repository:
+      repo: "{{ item.repo }}"
+      state: absent
+    loop: "{{ repositories_remove }}"
+    retries: "{{ retries_count }}"
+    delay: 3
+    register: repositories_remove
+    until: repositories_remove  is success
+    any_errors_fatal: false
+    tags:
+    - repositories
+    - base
+# Add basic repositories
+  - name: add_basic_repositories_from_variables_file
+    apt_repository:
+      repo: "{{ item.repo }}"
+      state: present
+      codename: "{{ codename }}"
+      filename: "{{ item.filename }}"
+    loop: "{{ repositories }}"
+    retries: "{{ retries_count }}"
+    delay: 3
+    register: repositories
+    until: repositories  is success
+    any_errors_fatal: false
+    tags:
+    - repositories
+    - base
+# Add optional repositories
+  - name: add_optional_repositories_from_variables_file
+    apt_repository:
+      repo: "{{ item.repo }}"
+      state: present
+      codename: "{{ item.codename }}"
+      filename: "{{ item.filename }}"
+    loop: "{{ repositories_optional }}"
+    retries: "{{ retries_count }}"
+    delay: "{{delay_time}}"
+    register: repositories
+    until: repositories  is success
+    any_errors_fatal: false
+    tags:
+    - repositories
+    - base
+  - name: apt_initial_refresh
+    apt:
+      update_cache: yes
+    ignore_errors: true
+    changed_when: false
+    tags:
+    - packages
+# Install essentials - packages needed for repos or other packages. Mostly OS-related
+  - name: install_essential_packages
+    apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: no
+    loop: "{{ packages_essential }}"
+    retries: "{{ retries_count }}"
+    delay: "{{delay_time}}"
+    register: packages_essential
+    until: packages_essential is success
+    any_errors_fatal: false
+    tags:
+    - packages
+    - base
+# Install basic packages
+  - name: install_packages
+    apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: no
+    loop: "{{ packages }}"
+    retries: "{{ retries_count }}"
+    delay: "{{delay_time}}"
+    register: packages
+    until: packages is success
+    any_errors_fatal: false
+    tags:
+    - packages
+    - base
+# Install optional packages - if variable `install_optional` is set to true
+  - name: install_optional_packages
+    apt:
+      name: "{{ item }}"
+      state: latest
+      update_cache: no
+    loop: "{{ packages_optional }}"
+    retries: "{{ retries_count }}"
+    delay: "{{delay_time}}"
+    register: packages_optional
+    until: packages_optional is success
+    when: install_optional == true
+    any_errors_fatal: false
+    tags:
+    - packages
+    - optional
+# Install 3-rd party software not available in repos
+  - name: install_extra_deb_packages_from_variables_file
+    apt:
+      deb: "{{ item }}"
+      state: present
+      update_cache: no
+      only_upgrade: yes
+    loop: "{{ deb }}"
+    retries: "{{ retries_count }}"
+    delay: "{{delay_time}}"
+    register: r_apt_deb
+    until: r_apt_deb is success
+    any_errors_fatal: false
+    ignore_errors: true
+    when: install_deb == true
+    tags:
+    - packages
+# Install Python's pip packages
+  - name: install_pip_packages
+    pip:
+      name: "{{ item }}"
+      extra_args: --upgrade
+    loop: "{{ pip }}"
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    register: pip
+    until: pip is success
+    any_errors_fatal: true
+    tags:
+    - packages
+    - base
+    - python
+ # - name: install_flatpak_apps
+ #   flatpak:
+ #     name: "{{ item.name|string }}"
+ #     state: present
+ #     method: system
+ #   loop: "{{ flatpak }}"
+ #   retries: "{{ retries_count }}"
+ #   delay: "{{ delay_time }}"
+ #   register: r_install_flatpak
+ #   until: r_install_flatpak is success
+ #   any_errors_fatal: false
+ #   when: install_flatpak == true
+ #   tags:
+ #   - packages
+ #   - flatpak
+    # Download 3-rd party software and unarchive it to `bin_path` setting +x
+  - name: check_if_bin_path_exists
+    file:
+      path: "{{ bin_path }}"
+      state: directory
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    tags:
+    - base
+    - downloads
+    - apps
+  - name: download_and_unarchive
+    unarchive:
+      src: "{{ item.url }}"
+      dest: "{{ bin_path }}"
+      keep_newer: true
+      mode: +x
+      remote_src: yes
+      extra_opts: [-j]
+    when: item.skip_tree == false
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    register: r_unarchive
+    until: r_unarchive is success
+    loop: "{{ downloads }}"
+    tags:
+    - base
+    - downloads
+    - apps
+# Download 3-rd party software and unarchive  it (flatten archive folder tree) to `bin_path` setting +x
+  - name: download_unarchive_and_flatten
+    unarchive:
+      src: "{{ item.url }}"
+      dest: "{{ bin_path }}"
+      keep_newer: true
+      mode: +x
+      remote_src: yes
+      extra_opts: ['--strip-components={{ item.skip_levels|int }}']
+      exclude:
+       - LICENSE
+       - README.md
+    when: item.skip_tree == true
+    loop: "{{ downloads }}"
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    register: r_unarchive_flatten
+    until: r_unarchive_flatten is success
+    tags:
+    - base
+    - downloads
+    - apps
+# Download 3-rd party software to `bin_path` setting +x
+  - name: download_files
+    get_url:
+      url: "{{ item.url }}"
+      dest: "{{ bin_path }}/{{ item.destination }}"
+      mode: 0755
+      force: yes
+    loop: "{{ files }}"
+    retries: "{{ retries_count }}"
+    delay: "{{ delay_time }}"
+    register: r_download_files
+    until: r_download_files is success
+    tags:
+    - base
+    - downloads
+    - apps
+# Start user-related modification block
+  - name: user_mods_block
+    block:
+    - name: create_or_check_users_groups
+      user:
+        name: "{{ active_user }}"
+        groups:
+          - root
+          - vboxusers
+          - docker
+          - adm
+          - sudo
+          - video
+          - cdrom
+          - plugdev
+          - dialout
+        state: present
+        append: true
+      any_errors_fatal: false
+      register: r_active_user_account
+      until: r_active_user_account is success
+      tags:
+      - base
+      - user
+    - name: set_fact_for_users_home_dir
+      set_fact:
+        "active_user_homedir": "{{ r_active_user_account.home }}"
+      tags:
+      - base
+      - user
+    - name: make_sure_autostart_folder_exists
+      file:
+        path: "{{ active_user_homedir }}/.config/autostart"
+        state: directory
+        owner: "{{ active_user }}"
+        group: "{{ active_user }}"
+        mode: 0755
+      register: create_autostart
+      retries: "{{ retries_count }}"
+      delay: "{{delay_time}}"
+      until: create_autostart is success
+      any_errors_fatal: true
+      tags:
+      - base
+      - user
+    - name: create_startup_applications
+      copy:
+        dest: "{{ active_user_homedir }}/.config/autostart/{{ item.filename }}"
+        src: "{{ item.source }}"
+        owner: "{{ active_user }}"
+        group: "{{ active_user }}"
+        force: false
+      loop: "{{ startup }}"
+      any_errors_fatal: false
+      register: r_create_startup_applications
+      retries: "{{ retries_count }}"
+      delay: "{{delay_time}}"
+      until: r_create_startup_applications is success
+    tags:
+    - base
+    - user
+ # mitogen block
+  - block:
+    - name: check_if_mitogen_path_exists
+      file:
+        path: "{{ item.dest_path }}"
+        state: directory
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      loop: "{{ mitogen.download }}"
+      register: r_check_if_mitogen_path_exists
+      until: r_check_if_mitogen_path_exists is success
+    - name: download_and_unarchive_mitogen
+      unarchive:
+        src: "{{ item.urls }}"
+        dest: "{{ item.dest_path }}"
+        keep_newer: true
+        remote_src: yes
+        extra_opts: [--strip-components=1]
+      loop: "{{ mitogen.download }}"
+      register: r_download_and_unarchive_mitogen
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_download_and_unarchive_mitogen is success
+    - name: enable_mitogen_in_ansible_config
+      ini_file:
+        path: /etc/ansible/ansible.cfg
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value }}"
+        state: present
+        backup: yes
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      loop: "{{ mitogen.config }}"
+      register: r_enable_mitogen_in_ansible_config
+      until: r_enable_mitogen_in_ansible_config is success
+      when: r_download_and_unarchive_mitogen is success
+    when: install_mitogen == true
+    tags:
+    - base
+    - downloads
+    - apps
+    - mitogen
+    - ansible
+  # start ansible block
+  - block:
+    - name: check_if_ansible_cfg_exists
+      stat:
+        path: "{{ ansible.cfg }}"
+      register: r_check_if_ansible_cfg_exists
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_check_if_ansible_cfg_exists is success
+    - set_fact:
+        ansible_exists: "{{ r_check_if_ansible_cfg_exists.stat.exists }}"
+      when: r_check_if_ansible_cfg_exists is success
+    - name: change_ansible_options
+      ini_file:
+        path: /etc/ansible/ansible.cfg
+        section: "{{ item.section }}"
+        option: "{{ item.option }}"
+        value: "{{ item.value|string }}"
+        state: present
+        backup: yes
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      loop: "{{ ansible.config }}"
+      register: r_change_ansible_options
+      until: r_change_ansible_options is success
+      when: ansible_exists == true
+    when: config_ansible == true
+    tags:
+    - ansible
+  # start vscode extensions block
+  - name: install_vscode_extensions
+    block:
+      - shell: dpkg-query -s code | grep 'install ok installed'
+        register: r_dpkg_query_vscode
+        any_errors_fatal: false
+        ignore_errors: true
+        changed_when: "r_dpkg_query_vscode.stdout != 'Status: install ok installed'"
+      - shell: if [ ! $(code --list-extensions|grep {{ item }}) ]; then code --install-extension {{ item }}; fi
+        loop: "{{ vscode }}"
+        register: r_install_extension
+        retries: "{{ retries_count }}"
+        delay: "{{ delay_time }}"
+        until: r_install_extension is success
+        become: "{{ active_user }}"
+        changed_when: "r_install_extension.stdout  != ''"
+        when: r_dpkg_query_vscode.rc == 0
+        any_errors_fatal: false
+        ignore_errors: true
+    tags:
+    - optional
+    - user
+    - vscode
+    when: install_vscode_extensions == true
+  # Start OS related block
+  - name: start_os_tweaks
+    block:
+    # OS related tweaks and finetuning
+    - name: set_timezone
+      timezone:
+        name: "{{ timezone }}"
+      any_errors_fatal: false
+    - name: add_neofetch_to_bashrc_globals
+      lineinfile:
+        path: /etc/bash.bashrc
+        line: neofetch
+      any_errors_fatal: false
+    - name: set_avahi_config
+      ini_file:
+        path: /etc/avahi/avahi-daemon.conf
+        section: server
+        option: domain-name
+        value: alocal
+        no_extra_spaces: yes
+      any_errors_fatal: false
+      ignore_errors: true
+      register: r_set_avahi_config
+    - name: nsswitch_config
+      lineinfile:
+        dest: /etc/nsswitch.conf
+        regexp: '^hosts:'
+        line: 'hosts:          files dns'
+        backrefs: yes
+      any_errors_fatal: false
+      ignore_errors: true
+    - name: restart_avahi_after_changes
+      systemd:
+        name: avahi-daemon
+        state: restarted
+        enabled: true
+      when: r_set_avahi_config is changed and r_set_avahi_config is defined
+#    - name: set_grub_defaults_for_SSD
+#      lineinfile:
+#        dest: /etc/default/grub
+#        regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+#        line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash elevator=deadline"'
+#        backrefs: true
+#      any_errors_fatal: false
+#      register: grub_default
+#      when: modify_grub == true
+#    - name: grub_update
+#      shell: update-grub2
+#      when: grub_default.changed and modify_grub == true
+    - name: enable_timeshift_in_rsync_mode
+      shell: timeshift --rsync --yes
+      args:
+        creates: /etc/timeshift.json
+      any_errors_fatal: false
+#    - name: add_user_to_sudoers
+#      copy:
+#        dest: "/etc/sudoers.d/{{ active_user }}"
+#        owner: root
+#        group: root
+#        mode: 0444
+#        content: |
+#          {{ active_user }} ALL=(ALL) NOPASSWD: ALL
+#      any_errors_fatal: false
+#      retries: "{{ retries_count }}"
+#    - name: create_fstrim_folder_for_systemd_override
+#      file:
+#        path: /etc/systemd/system/fstrim.timer.d
+#        state: directory
+#    - name: create_fstrim_override_for_systemd
+#      copy:
+#        dest: /etc/systemd/system/fstrim.timer.d/override.conf
+#        content: |
+#          [Timer]
+#          OnCalendar=hourly
+#          OnBootSec=5m
+#      register: r_create_fstrim_override
+#    - name: start_fstrim.timer
+#      systemd:
+#        daemon_reload: true
+#        name: fstrim.timer
+#        state: restarted
+#        enabled: true
+#      when: r_create_fstrim_override.changed
+    - name: sysctl_changes
+      sysctl:
+        name: "{{ item.name|string }}"
+        value: "{{ item.value|string }}"
+        state: "{{ item.state|string }}"
+        reload: yes
+      loop: "{{ sysctl }}"
+      register: r_sysctl_changes
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_sysctl_changes is success
+      when: config_sysctl == true|bool
+#    - name: sysctl_change_qdisc
+#      sysctl:
+#        name: net.core.default_qdisc
+#        value: fq
+#        state: present
+#        reload: no
+#      when: enable_bbr == true
+#    - name: sysctl_change_congestion_control
+#      sysctl:
+#        name: net.ipv4.tcp_congestion_control
+#        value: bbr
+#        state: present
+#        reload: yes
+#      when: enable_bbr == true
+#    - name: sysctl_change_vm_swappines
+#      sysctl:
+#        name: vm.swappiness
+#        value: "{{ 1|int }}"
+#        state: present
+#        reload: yes
+    - name: change_alternatives
+      alternatives:
+        name: "{{ item.name }}"
+        path: "{{ item.path }}"
+      loop: "{{ alternatives }}"
+      register: r_alternatives
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_alternatives is success
+    - name: set_EDITOR_variable
+      lineinfile:
+        dest: "/etc/environment"
+        state: present
+        regexp: "^{{ item.name }}"
+        line: "{{ item.name }}={{ item.value }}"
+      loop: "{{ global_env }}"
+      register: r_environment
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_environment is success
+    - name: set_dconf_values
+      dconf:
+        key: "{{ item.key|string }}"
+        state: "{{ item.state|string }}"
+        value: "{{ item.value|string }}"
+      loop: "{{ dconf }}"
+      register: r_dconf_values
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_dconf_values is success
+      when: config_dconf == true|bool
+      become_user: "{{ active_user }}"
+    - name: update_all_packages
+      apt:
+        upgrade: "yes"
+        update_cache: yes
+        autoclean: yes
+      register: apt_upgrade
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: apt_upgrade is success
+    # Reboot
+    - name: reboot_after_changes
+      reboot:
+        pre_reboot_delay: 15
+        post_reboot_delay: 15
+        msg: "Initial reboot"
+      when: (reboot_required is defined and reboot_required == true) or (apt_upgrade.changed)
+      register: r_reboot_after_upgrade
+      any_errors_fatal: false
+      retries: "{{ retries_count }}"
+      delay: "{{ delay_time }}"
+      until: r_reboot_after_upgrade is success
+      tags:
+        - base
+        - user
+        - os
+    - name: clean_apt_cache
+      shell: apt clean all -y
+      any_errors_fatal: false
+      register: r_clean_apt_cache
+      retries: "{{ retries_count }}"
+      delay: "{{delay_time}}"
+      changed_when: false
+      tags:
+      - base
+      - user
+      - os
